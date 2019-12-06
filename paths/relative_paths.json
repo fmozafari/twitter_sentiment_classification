@@ -1,0 +1,10 @@
+{
+    "_comment": "This file includes relative paths for the data and the results",
+    "glove_folder": "data/glove_embeddings",
+    "train_pos": "data/twitter-datasets/train_pos.txt",
+    "train_neg": "data/twitter-datasets/train_neg.txt",
+    "train_pos_full": "data/twitter-datasets/train_pos_full.txt",
+    "train_neg_full": "data/twitter-datasets/train_neg_full.txt",
+    "test": "data/twitter-datasets/test_data.txt",
+    "results_dir": "results/"
+}
