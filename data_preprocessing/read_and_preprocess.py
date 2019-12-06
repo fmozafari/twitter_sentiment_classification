@@ -77,7 +77,7 @@ def preprocessing (data_frame):
 
     return data_frame
 
-def load_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
+def generate_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
 
     train_pos_file, train_neg_file, test_file, glove_embedings = read_data(FULL , GLOVE_DIMENSION)
     preprocessed_train_pos = preprocessing(train_pos_file).to_numpy()
@@ -161,8 +161,8 @@ def load_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
     print('%s words of %s found' % (hits, number_of_vocabularies))
     print(embedding_matrix.shape)
 
-    print('Saving everything...')
-    dir_name = "data/glove_%s_words_%s_full_%s" % (GLOVE_DIMENSION, MAX_WORDS, FULL)
+    print('Saving ...')
+    dir_name = "data/generated_gloved_%s_words_%s_full_%s" % (GLOVE_DIMENSION, MAX_WORDS, FULL)
     if not os.path.isdir(dir_name):
         os.mkdir(dir_name)
 
@@ -172,6 +172,19 @@ def load_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
     np.save(os.path.join(dir_name, "X_test"), x_test)
 
     print("Saving done.")
+
+def load_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
+    path = "data/generated_gloved_%s_words_%s_full_%s" % (GLOVE_DIMENSION, MAX_WORDS, FULL)
+    if not os.path.isdir(path):
+        print("Generating data for new parameters")
+        generate_data(FULL,GLOVE_DIMENSION,MAX_WORDS)
+        print("Generating data done!")
+    else:
+        print("Data generated before...")
+    embedding_matrix = np.load(os.path.join(path, "embedding_matrix.npy"))
+    X_train = np.load(os.path.join(path, "X_train.npy"))
+    Y_train = np.load(os.path.join(path, "Y_train.npy"))
+    X_test = np.load(os.path.join(path, "X_test.npy"))
 
 
 load_data(FULL=True)
