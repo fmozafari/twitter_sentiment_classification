@@ -15,7 +15,7 @@ def read_data(FULL=False , GLOVE_DIMENSION=25):
         train_pos_file = pd.read_csv(PATHS["train_pos"] , header=None  , engine='python' , sep='k760#7*&^')
         train_neg_file = pd.read_csv(PATHS["train_neg"] , header=None  , engine='python' , sep='k760#7*&^')
 
-    test_file = pd.read_csv(PATHS["test"] , header=None  , engine='python' , sep='k760#7*&^')
+    test_file = pd.read_csv(PATHS["test"] , header=None , engine='python' , sep='k760#7*&^')
 
     # reading glove embedings from directory
     glove_embeddings_path = PATHS["glove_folder"] + '/glove.twitter.27B.' + str(GLOVE_DIMENSION) + 'd.txt'
@@ -24,12 +24,6 @@ def read_data(FULL=False , GLOVE_DIMENSION=25):
     
     glove_embeddings = {glove_array[i][0]: glove_array[i][1:] for i in range(glove_array.shape[0])}
     #print(glove_embeddings)
-    
-    
-
-    #print({glove_embeddings_file[i][0]: glove_embeddings_file[i][1:].tolist() for i in glove_embeddings_file.T})
-    #print(glove_embeddings)
-    #print(glove_embeddings_file['work'])
 
     return train_pos_file, train_neg_file, test_file, glove_embeddings
 
@@ -81,9 +75,6 @@ def load_data(FULL=False , GLOVE_DIMENSION=25):
     preprocessed_train_neg = preprocessing(train_neg_file)
     preprocessed_test = preprocessing(test_file)
 
-    # df = pd.read_csv("test.txt")
-    # df = preprocessing(df)
-    # print(df)
     return preprocessed_train_pos, preprocessed_train_neg, preprocessed_test, glove_embedings
 
 #read_data(GLOVE_DIMENSION=1)
