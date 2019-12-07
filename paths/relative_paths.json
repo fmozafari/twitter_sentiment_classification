@@ -6,5 +6,6 @@
     "train_pos_full": "data/twitter-datasets/train_pos_full.txt",
     "train_neg_full": "data/twitter-datasets/train_neg_full.txt",
     "test": "data/twitter-datasets/test_data.txt",
-    "results_dir": "results/"
+    "results_folder": "results/",
+    "model_parameters": "generated_parameters/"
 }
