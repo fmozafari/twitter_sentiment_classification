@@ -9,7 +9,7 @@ from keras.preprocessing.sequence import pad_sequences
 def read_data(FULL=False , GLOVE_DIMENSION=25):
 
     # Loading the relative paths
-    with open("config/relative_paths.json") as f:
+    with open("paths/relative_paths.json") as f:
         PATHS = json.load(f)
 
     if FULL:
@@ -185,9 +185,10 @@ def load_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
     X_train = np.load(os.path.join(path, "X_train.npy"))
     Y_train = np.load(os.path.join(path, "Y_train.npy"))
     X_test = np.load(os.path.join(path, "X_test.npy"))
+    return X_train, Y_train, X_test, embedding_matrix
 
 
-load_data(FULL=True)
+#load_data(FULL=True)
 
 
 
