@@ -48,8 +48,7 @@ class LSTM_():
         self.model.add(Dense(1, activation=params["dense_activation"]))
 
         # Compile the model
-        self.model.compile(
-            optimizer=params["optimizer"], loss=params["loss"], metrics=['accuracy'])
+        self.model.compile(optimizer=params["optimizer"], , metrics=['accuracy'] , loss=params["loss"])
 
 
     def train(self, X, Y, epochs, batch_size, validation_data=None):
