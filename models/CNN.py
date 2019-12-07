@@ -31,14 +31,7 @@ class CNN_():
         self.model.add(Embedding(self.embedding_matrix.shape[0], self.embedding_matrix.shape[1], input_length=self.tweet_len,
                                  weights=[self.embedding_matrix], name='emb'))
 
-        self.model.add(Conv1D(filters=params["CNN_filters"] , kernel_regularizer=regularizers.l2(0.01), 
-                                kernel_size=params["CNN_kernel_size"], activation=params["CNN_activation"]))
-
-        self.model.add(MaxPooling1D(pool_size=params["MP_pool_size"]))
         
-        self.model.add(Flatten())
-        
-        self.model.add(Dense(1, activation=params["DENSE_activation"]))
         
         self.model.compile(loss=params["loss"] , metrics=['accuracy'] , optimizer='adam')
 
