@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import json
 import os
+from keras import regularizers
 
 
 class LSTM_():
@@ -29,7 +30,7 @@ class LSTM_():
     
         # Add embedding layer
         self.model.add(Embedding(self.embeding_matrix.shape[0] , self.embeding_matrix.shape[1] , 
-        input_length=self.tweet_len , weights=[self.embeding_matrix] , name='emb'))
+        input_length=self.tweet_len , weights=[self.embeding_matrix] , name='emb' , trainable=True))
         
         # Masking layer for pre-trained embeddings
         self.model.add(Masking(mask_value=0.0))
@@ -68,6 +69,7 @@ class LSTM_():
 
         # Train model
         self.model.fit(X, Y, epochs=epochs, batch_size=batch_size, validation_data=validation_data, callbacks=callbacks)
+        
         
     def load(self):
         model_json = json.load(open(self.model_json_path, "r"))

@@ -34,6 +34,7 @@ params = {
     'epochs': 5,
     'dense_activation': 'sigmoid',
     'optimizer': 'RMSprop'
+  
 }
 
 model_name = "LSTM"

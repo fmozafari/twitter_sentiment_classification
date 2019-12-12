@@ -22,12 +22,14 @@ def read_data(FULL=False , GLOVE_DIMENSION=25):
     test_file = pd.read_csv(PATHS["test"] , header=None , engine='python' , sep='k760#7*&^')
 
     # reading glove embedings from directory
-    glove_embeddings_path = PATHS["glove_folder"] + '/glove.twitter.27B.' + str(GLOVE_DIMENSION) + 'd.txt'
-    glove_embeddings_file = pd.read_csv(glove_embeddings_path , header=None , sep = '\s+')
-    glove_array = glove_embeddings_file.to_numpy()
-    
-    glove_embeddings = {glove_array[i][0]: glove_array[i][1:] for i in range(glove_array.shape[0])}
-    #print(glove_embeddings)
+    glove_embeddings_path = PATHS["glove_folder"] + '/glove.twitter.27B.' + str(GLOVE_DIMENSION) + 'd.txt'        
+    glove_embeddings = {}
+    with open(glove_embeddings_path) as f:
+        for line in f:
+            values = line.split()
+            word = values[0]
+            coefs = np.asarray(values[1:])
+            glove_embeddings[word] = coefs
 
     return train_pos_file, train_neg_file, test_file, glove_embeddings
 
@@ -74,6 +76,11 @@ def preprocessing (data_frame):
 
     # remove <url>
     data_frame = data_frame.replace(r"<url>" , "" , regex=True)
+
+    # remove stop words
+    stop_words = set(stopwords.words('english'))
+    pat = r'\b(?:{})\b'.format('|'.join(stop_words))
+    data_frame = data_frame.replace(pat, "" , regex=True )
 
     return data_frame
 
@@ -184,6 +191,8 @@ def load_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
     embedding_matrix = np.load(os.path.join(path, "embedding_matrix.npy"))
     X_train = np.load(os.path.join(path, "X_train.npy"))
     Y_train = np.load(os.path.join(path, "Y_train.npy"))
+    print("shape=")
+    print(Y_train.shape)
     X_test = np.load(os.path.join(path, "X_test.npy"))
     return X_train, Y_train, X_test, embedding_matrix
 
