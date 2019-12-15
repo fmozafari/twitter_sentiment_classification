@@ -5,6 +5,13 @@ import sys
 import numpy as np
 import os
 from keras.preprocessing.sequence import pad_sequences
+import nltk
+from nltk.corpus import stopwords
+from nltk import word_tokenize , sent_tokenize
+from keras.preprocessing.text import Tokenizer
+from nltk.stem import PorterStemmer 
+from nltk.stem.wordnet import WordNetLemmatizer
+
 
 def read_data(FULL=False , GLOVE_DIMENSION=25):
 
@@ -22,6 +29,12 @@ def read_data(FULL=False , GLOVE_DIMENSION=25):
     test_file = pd.read_csv(PATHS["test"] , header=None , engine='python' , sep='k760#7*&^')
 
     # reading glove embedings from directory
+    # glove_embeddings_path = PATHS["glove_folder"] + '/glove.twitter.27B.' + str(GLOVE_DIMENSION) + 'd.txt'	           
+    # glove_embeddings_file = pd.read_csv(glove_embeddings_path , header=None , sep = '\s+')	    
+    # glove_embeddings = {}
+    # glove_array = glove_embeddings_file.to_numpy()	    
+    # glove_embeddings = {glove_array[i][0]: glove_array[i][1:] for i in range(glove_array.shape[0])}
+
     glove_embeddings_path = PATHS["glove_folder"] + '/glove.twitter.27B.' + str(GLOVE_DIMENSION) + 'd.txt'        
     glove_embeddings = {}
     with open(glove_embeddings_path) as f:
@@ -35,38 +48,35 @@ def read_data(FULL=False , GLOVE_DIMENSION=25):
 
 def preprocessing (data_frame):
 
-    # replace links with '<url>' text.
+    # replace links with NULL.
     data_frame = data_frame.replace(r'http\S+', "", regex=True).replace(r'www\S+', "", regex=True)
 
-    # replace smiling face with '<smile>' text. smile face: )dD
-    data_frame = data_frame.replace(r"[8:=;]['`\-]?[)dD]+|[(dD]+['`\-]?[8:=;]", "<smile>" , regex=True)
+    # replace smiling face with 'smile' text. smile face: )dD
+    data_frame = data_frame.replace(r"[8:=;]['`\-]?[)dD]+|[(dD]+['`\-]?[8:=;]", "smile" , regex=True)
 
-    # replace lol face with '<lolface>' text. lol face: pP
-    data_frame = data_frame.replace(r"[8:=;]['`\-]?[pP]+", "<lolface>" , regex=True)
+    # replace lol face with 'laugh' text. lol face: pP
+    data_frame = data_frame.replace(r"[8:=;]['`\-]?[pP]+", "laugh" , regex=True)
     
-    # replace sad face with '<sadface>' text. sad face: (
-    data_frame = data_frame.replace(r"[8:=;]['`\-]?[(]+|[)]+['`\-]?[8:=;]", "<sadface>" , regex=True)
+    # replace sad face with 'saD' text. sad face: (
+    data_frame = data_frame.replace(r"[8:=;]['`\-]?[(]+|[)]+['`\-]?[8:=;]", "sad" , regex=True)
     
-    # replace neutral face with '<neutralface>' text. neutral face: \/|l
-    data_frame = data_frame.replace(r"[8:=;]['`\-]?[\/|l]+", "<neutralface>" , regex=True)
+    # replace neutral face with 'neutral' text. neutral face: \/|l
+    data_frame = data_frame.replace(r"[8:=;]['`\-]?[\/|l]+", "neutral" , regex=True)
     
     # seperate concatenated words wih /. Ex.: sad/happy -> sad happy
     data_frame = data_frame.replace(r"/" , " / " , regex=True)
     
-    # replace <3 symbol with '<heart>' text.
-    data_frame = data_frame.replace(r"<3" , "" , regex=True)
+    # replace <3 symbol with 'heart' text.
+    data_frame = data_frame.replace(r"<3" , "heart" , regex=True)
     
-    # replace numbers with '<number>' text.
+    # replace numbers with NULL.
     data_frame = data_frame.replace(r"[-+]?[.\d]*[\d]+[:,.\d]*" , "" , regex=True )
     
-    # replace repeated punctuation with '<repeat>' text. Ex.: ????? -> ? <repeat>
+    # remove repeated punctuation. Ex.: ????? -> ? 
     data_frame = data_frame.replace(r"([!?.]){2,}" , r"\1" , regex=True)
     
-    # replace elongated endings with '<elong>' text. Ex.: goodddd -> good <elong>
+    # remove elongated endings. Ex.: goodddd -> good 
     data_frame = data_frame.replace(r"\b(\S*?)(.)\2{2,}\b", r"\1", regex=True)
-    
-    # replace multiple spaces with one
-    data_frame = data_frame.replace("\s+", " " , regex=True)
     
     # remove apostrophes
     data_frame = data_frame.replace(r"'" , "" , regex=True)
@@ -81,6 +91,31 @@ def preprocessing (data_frame):
     stop_words = set(stopwords.words('english'))
     pat = r'\b(?:{})\b'.format('|'.join(stop_words))
     data_frame = data_frame.replace(pat, "" , regex=True )
+
+    # convert to lowercase
+    data_frame = data_frame.apply(lambda x: x.astype(str).str.lower())
+
+    # stemming
+    ps = PorterStemmer() 
+    data_frame = data_frame.iloc[:,0].apply(lambda x: ' '.join([ps.stem(word) for word in x.split()] ))
+
+    # lemmatization
+    lmtzr = WordNetLemmatizer()
+    data_frame = data_frame.apply(lambda x: ' '.join([lmtzr.lemmatize(word,'v') for word in x.split()]))
+   
+    # replace multiple spaces with one
+    data_frame = data_frame.replace("\s+", " " , regex=True)
+
+    # remove punctuations 
+    # data_frame = data_frame.replace(r".", "" , regex=True)
+    # data_frame = data_frame.replace(r",", "" , regex=True)
+    # data_frame = data_frame.replace(r":", "" , regex=True)
+    # data_frame = data_frame.replace(r";", "" , regex=True)
+    # #data_frame = data_frame.replace(r'?', '' , regex=True)
+    # data_frame = data_frame.replace(r"!", "" , regex=True)
+    # data_frame = data_frame.replace(r">", "" , regex=True)
+    # data_frame = data_frame.replace(r"<", "" , regex=True)
+
 
     return data_frame
 
@@ -100,73 +135,57 @@ def generate_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
         labels.append(0)
         train_tweets.append(preprocessed_train_neg[i])
 
-    # Mapping every unique word to a integer (bulding the vocabulary)
-    print('Bulding the vocabulary...')
-    word_to_index = {}
-    word_freqs = {}
-    k = 0
-    for i, tweet in enumerate(train_tweets):
-        words = tweet[0].split()
-        #print(words)
-        for word in words[:MAX_WORDS]:
-            if word not in word_to_index:
-                word_to_index[word] = k
-                k += 1
-            if word not in word_freqs:
-                word_freqs[word] = 1
-            else:
-                word_freqs[word] += 1
-    word_to_index["unk"] = k
-    number_of_vocabularies = len(word_to_index)
 
-    # Converting training tweets to integer sequences...
-    train_sequences = []
-    for i, tweet in enumerate(train_tweets):
-        words = tweet[0].split()
-        tweet_seq = []
-        for word in words[:MAX_WORDS]:
-            if word not in word_to_index:
-                tweet_seq.append(word_to_index["unk"])
-            else:
-                tweet_seq.append(word_to_index[word])
-        train_sequences.append(tweet_seq)
+    tokenizer = Tokenizer()
+    tokenizer.fit_on_texts(train_tweets)
 
-    # Padding the sequences to match the `MAX_WORDS`
-    x_train = pad_sequences(train_sequences, maxlen=MAX_WORDS, padding="post", value=number_of_vocabularies)
-
-    # Converting testing tweets to integer sequences...
-    test_sequences = []
-    for i, tweet in enumerate(preprocessed_test):
-        words = tweet[0].split()
-        tweet_seq = []
-        for word in words[:MAX_WORDS]:
-            if word not in word_to_index:
-                tweet_seq.append(word_to_index["unk"])
-            else:
-                tweet_seq.append(word_to_index[word])
-        test_sequences.append(tweet_seq)
+    word_index_train = tokenizer.word_index
     
-    # Padding the sequences to match the `MAX_WORDS`
-    x_test = pad_sequences(test_sequences, maxlen=MAX_WORDS, padding="post", value=number_of_vocabularies)
+    print('Found %s unique tokens in train data set.' % len(word_index_train))
+    
+    sequences_train = tokenizer.texts_to_sequences(train_tweets)
 
-    # Generating the embedding matrix for vocabularies 
-    unknown = []
+    train_data = pad_sequences(sequences_train, maxlen=MAX_WORDS)
+    #train_labels = np_utils.to_categorical(train_data["label"])
+    
+    print('Shape of train data set tensor:', train_data.shape)
+    #print('Shape of traib label set tensor:', train_labels.shape)
+    
+    ### TEST
+    
+    sequences_test = tokenizer.texts_to_sequences(preprocessed_test)
+    test_data = pad_sequences(sequences_test, maxlen=MAX_WORDS)
+    
+    print('Shape of test data set tensor:', test_data.shape)
+    
+    
+    ### it should be betweem -1 and 1
+ #   embedding_matrix = np.random.rand(len(word_index) + 1, GLOVE_DIMENSION)*2 - 1 
+    # embedding_matrix = np.zeros((len(word_index_train) + 1, GLOVE_DIMENSION))
+    # for word, i in word_index_train.items():
+    #     embedding_vector = glove_embeddings.get(word)
+    #     if embedding_vector is not None:
+    #         embedding_matrix[i] = embedding_vector[-300:]
+
     hits = 0
+    number_of_vocabularies = len(word_index_train)
     embedding_matrix = np.zeros((number_of_vocabularies + 1, GLOVE_DIMENSION))
-    for word, idx in word_to_index.items():
+    for word, idx in word_index_train.items():
         if word in glove_embedings:
             emb = glove_embedings[word]
             embedding_matrix[idx] = emb
             hits += 1
         else:
-            unknown.append(word)
+            #unknown.append(word)
             ran_floats = np.random.rand(GLOVE_DIMENSION) * (13.3-0.5) + 0.5
             emb = ran_floats#glove_embedings["unk"]
             embedding_matrix[idx] = emb
 
     embedding_matrix[number_of_vocabularies] = [0]*GLOVE_DIMENSION
+
+        
     print('%s words of %s found' % (hits, number_of_vocabularies))
-    print(embedding_matrix.shape)
+    #print('embedding matrix size: %s' %(embedding_matrix.shape))
 
     print('Saving ...')
     dir_name = "data/generated_gloved_%s_words_%s_full_%s" % (GLOVE_DIMENSION, MAX_WORDS, FULL)
@@ -174,9 +193,9 @@ def generate_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
         os.mkdir(dir_name)
 
     np.save(os.path.join(dir_name, "embedding_matrix"), embedding_matrix)
-    np.save(os.path.join(dir_name, "X_train"), x_train)
+    np.save(os.path.join(dir_name, "X_train_seq"), train_data)
     np.save(os.path.join(dir_name, "Y_train"), labels)
-    np.save(os.path.join(dir_name, "X_test"), x_test)
+    np.save(os.path.join(dir_name, "X_test_seq"), test_data)
 
     print("Saving done.")
 
@@ -189,15 +208,19 @@ def load_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
     else:
         print("Data generated before...")
     embedding_matrix = np.load(os.path.join(path, "embedding_matrix.npy"))
-    X_train = np.load(os.path.join(path, "X_train.npy"))
-    Y_train = np.load(os.path.join(path, "Y_train.npy"))
-    print("shape=")
+    X_train = np.load(os.path.join(path, "X_train_seq.npy") , allow_pickle=True)
+    Y_train = np.load(os.path.join(path, "Y_train.npy") , allow_pickle=True)
+    print("y shape: ")
     print(Y_train.shape)
-    X_test = np.load(os.path.join(path, "X_test.npy"))
+    X_test = np.load(os.path.join(path, "X_test_seq.npy") , allow_pickle=True)
     return X_train, Y_train, X_test, embedding_matrix
 
 
 #load_data(FULL=True)
+ 
+# sample = pd.read_csv("data/twitter-datasets/small_sample.txt", header=None  , engine='python' , sep='k760#7*&^')
+# preprocessed_sample = preprocessing(sample)
+# print(preprocessed_sample)
 
 
 
