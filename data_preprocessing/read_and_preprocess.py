@@ -14,6 +14,15 @@ from nltk.stem.wordnet import WordNetLemmatizer
 
 
 def read_data(FULL=False , GLOVE_DIMENSION=25):
+    """
+    This function read train pos, train neg, test and glove regarding dimension
+    Input:
+        FULL: Boolean, specify what amount of train files will be read
+        GLOVE_DIMENSION: Integer number, specify which dimension of glove will be used
+    Output:
+        3 DataFrame for train pos, train neg, and test 
+        1 dictionary for glove embedding
+    """
 
     # Loading the relative paths
     with open("paths/relative_paths.json") as f:
@@ -28,13 +37,6 @@ def read_data(FULL=False , GLOVE_DIMENSION=25):
 
     test_file = pd.read_csv(PATHS["test"] , header=None , engine='python' , sep='k760#7*&^')
 
-    # reading glove embedings from directory
-    # glove_embeddings_path = PATHS["glove_folder"] + '/glove.twitter.27B.' + str(GLOVE_DIMENSION) + 'd.txt'	           
-    # glove_embeddings_file = pd.read_csv(glove_embeddings_path , header=None , sep = '\s+')	    
-    # glove_embeddings = {}
-    # glove_array = glove_embeddings_file.to_numpy()	    
-    # glove_embeddings = {glove_array[i][0]: glove_array[i][1:] for i in range(glove_array.shape[0])}
-
     glove_embeddings_path = PATHS["glove_folder"] + '/glove.twitter.27B.' + str(GLOVE_DIMENSION) + 'd.txt'        
     glove_embeddings = {}
     with open(glove_embeddings_path) as f:
@@ -47,6 +49,9 @@ def read_data(FULL=False , GLOVE_DIMENSION=25):
     return train_pos_file, train_neg_file, test_file, glove_embeddings
 
 def preprocessing (data_frame):
+    """
+    This fuction provides required preprocessing task for a dataframe including tweets and return preprocessed dataframe
+    """
 
     # replace links with NULL.
     data_frame = data_frame.replace(r'http\S+', "", regex=True).replace(r'www\S+', "", regex=True)
@@ -87,14 +92,18 @@ def preprocessing (data_frame):
     # remove <url>
     data_frame = data_frame.replace(r"<url>" , "" , regex=True)
 
+    # replace multiple spaces with one
+    data_frame = data_frame.replace("\s+", " " , regex=True)
+
+    # convert to lowercase
+    data_frame = data_frame.apply(lambda x: x.astype(str).str.lower())
+    """
+    
     # remove stop words
     stop_words = set(stopwords.words('english'))
     pat = r'\b(?:{})\b'.format('|'.join(stop_words))
     data_frame = data_frame.replace(pat, "" , regex=True )
-
-    # convert to lowercase
-    data_frame = data_frame.apply(lambda x: x.astype(str).str.lower())
-
+    
     # stemming
     ps = PorterStemmer() 
     data_frame = data_frame.iloc[:,0].apply(lambda x: ' '.join([ps.stem(word) for word in x.split()] ))
@@ -102,10 +111,7 @@ def preprocessing (data_frame):
     # lemmatization
     lmtzr = WordNetLemmatizer()
     data_frame = data_frame.apply(lambda x: ' '.join([lmtzr.lemmatize(word,'v') for word in x.split()]))
-   
-    # replace multiple spaces with one
-    data_frame = data_frame.replace("\s+", " " , regex=True)
-
+    """
     # remove punctuations 
     # data_frame = data_frame.replace(r".", "" , regex=True)
     # data_frame = data_frame.replace(r",", "" , regex=True)
@@ -120,72 +126,62 @@ def preprocessing (data_frame):
     return data_frame
 
 def generate_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
+    """
+    This function correspond each word to a number and generate embedding matrix for them --> saved in "embedding_matrix"
+    Concatenate pos and neg train tweets and generate a sequence of numbers for them --> saved in "X_train_seq"
+    Create a vector of label correspond to train tweets including 1 for pos and 0 for neg --> saved in "Y_train"
+    Generate a sequence of nembers for test tweets --> saved in "X_test_seq" 
+    """
 
     train_pos_file, train_neg_file, test_file, glove_embedings = read_data(FULL , GLOVE_DIMENSION)
-    preprocessed_train_pos = preprocessing(train_pos_file).to_numpy()
-    preprocessed_train_neg = preprocessing(train_neg_file).to_numpy()
-    preprocessed_test = preprocessing(test_file).to_numpy()
+    preprocessed_train_pos = preprocessing(train_pos_file)#.values.to_numpy()
+    preprocessed_train_neg = preprocessing(train_neg_file)#.values.to_numpy()
+    preprocessed_test = preprocessing(test_file)#.values.to_numpy()
+    data_list = [preprocessed_train_pos , preprocessed_train_neg]
+    train_tweets = pd.concat(data_list, ignore_index=False)
+    test_tweets = preprocessed_test
 
     labels = []
-    train_tweets = []
     for i in range(preprocessed_train_pos.shape[0]):
         labels.append(1)
-        train_tweets.append(preprocessed_train_pos[i])
+     
     for i in range(preprocessed_train_neg.shape[0]):
         labels.append(0)
-        train_tweets.append(preprocessed_train_neg[i])
-
 
     tokenizer = Tokenizer()
-    tokenizer.fit_on_texts(train_tweets)
+    tokenizer.fit_on_texts(train_tweets[0])
 
     word_index_train = tokenizer.word_index
     
     print('Found %s unique tokens in train data set.' % len(word_index_train))
     
-    sequences_train = tokenizer.texts_to_sequences(train_tweets)
+    sequences_train = tokenizer.texts_to_sequences(train_tweets[0])
 
     train_data = pad_sequences(sequences_train, maxlen=MAX_WORDS)
-    #train_labels = np_utils.to_categorical(train_data["label"])
     
     print('Shape of train data set tensor:', train_data.shape)
-    #print('Shape of traib label set tensor:', train_labels.shape)
     
     ### TEST
     
-    sequences_test = tokenizer.texts_to_sequences(preprocessed_test)
+    sequences_test = tokenizer.texts_to_sequences(test_tweets[0])
     test_data = pad_sequences(sequences_test, maxlen=MAX_WORDS)
-    
     print('Shape of test data set tensor:', test_data.shape)
     
-    
-    ### it should be betweem -1 and 1
- #   embedding_matrix = np.random.rand(len(word_index) + 1, GLOVE_DIMENSION)*2 - 1 
-    # embedding_matrix = np.zeros((len(word_index_train) + 1, GLOVE_DIMENSION))
-    # for word, i in word_index_train.items():
-    #     embedding_vector = glove_embeddings.get(word)
-    #     if embedding_vector is not None:
-    #         embedding_matrix[i] = embedding_vector[-300:]
-
     hits = 0
     number_of_vocabularies = len(word_index_train)
     embedding_matrix = np.zeros((number_of_vocabularies + 1, GLOVE_DIMENSION))
     for word, idx in word_index_train.items():
         if word in glove_embedings:
             emb = glove_embedings[word]
-            embedding_matrix[idx] = emb
+            embedding_matrix[idx] = emb[-GLOVE_DIMENSION:]
             hits += 1
         else:
-            #unknown.append(word)
             ran_floats = np.random.rand(GLOVE_DIMENSION) * (13.3-0.5) + 0.5
-            emb = ran_floats#glove_embedings["unk"]
+            emb = ran_floats #glove_embedings["unk"]
             embedding_matrix[idx] = emb
 
     embedding_matrix[number_of_vocabularies] = [0]*GLOVE_DIMENSION
-
-        
     print('%s words of %s found' % (hits, number_of_vocabularies))
-    #print('embedding matrix size: %s' %(embedding_matrix.shape))
 
     print('Saving ...')
     dir_name = "data/generated_gloved_%s_words_%s_full_%s" % (GLOVE_DIMENSION, MAX_WORDS, FULL)
@@ -200,6 +196,11 @@ def generate_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
     print("Saving done.")
 
 def load_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
+    """
+    Loading data
+    First check if desired folder exist, only load it, otherwise generate and then load
+    """
+    
     path = "data/generated_gloved_%s_words_%s_full_%s" % (GLOVE_DIMENSION, MAX_WORDS, FULL)
     if not os.path.isdir(path):
         print("Generating data for new parameters")
@@ -214,15 +215,4 @@ def load_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
     print(Y_train.shape)
     X_test = np.load(os.path.join(path, "X_test_seq.npy") , allow_pickle=True)
     return X_train, Y_train, X_test, embedding_matrix
-
-
-#load_data(FULL=True)
- 
-# sample = pd.read_csv("data/twitter-datasets/small_sample.txt", header=None  , engine='python' , sep='k760#7*&^')
-# preprocessed_sample = preprocessing(sample)
-# print(preprocessed_sample)
-
-
-
-
 
