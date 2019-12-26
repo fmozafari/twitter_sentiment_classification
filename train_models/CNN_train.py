@@ -23,7 +23,7 @@ print("Data Loaded...")
 
 print(embeding_matrix.shape[0])
 
-xtrain , xvalid, ytrain, yvalid = train_test_split(X_train, Y_train, shuffle=True, test_size=0.1, random_state=0) # for cross validation
+#train , xvalid, ytrain, yvalid = train_test_split(X_train, Y_train, shuffle=True, test_size=0.1, random_state=0) # for cross validation
 
 # model parameters
 params = {
@@ -47,7 +47,7 @@ print("----model summary----")
 print(cnn.model.summary())
 # Train the model ---> save the weights with best validation loss
 print("----training.....")
-cnn.train(xtrain, ytrain, epochs=params["epochs"], batch_size=params["batch_size"], validation_data=(xvalid, yvalid))
+cnn.train(X_train, Y_train, epochs=params["epochs"], batch_size=params["batch_size"])
 print("------model trained------")
 print("++++++++++++++++++++++++++++++++++")
 print(model_name)

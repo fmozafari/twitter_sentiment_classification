@@ -208,7 +208,7 @@ def load_data(FULL=False , GLOVE_DIMENSION=25 , MAX_WORDS=40):
         print("Generating data done!")
     else:
         print("Data generated before...")
-    embedding_matrix = np.load(os.path.join(path, "embedding_matrix.npy"))
+    embedding_matrix = np.load(os.path.join(path, "embedding_matrix.npy") , allow_pickle=True)
     X_train = np.load(os.path.join(path, "X_train_seq.npy") , allow_pickle=True)
     Y_train = np.load(os.path.join(path, "Y_train.npy") , allow_pickle=True)
     print("y shape: ")

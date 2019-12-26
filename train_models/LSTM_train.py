@@ -10,6 +10,8 @@ from read_and_preprocess import *
 #from data_preprocessing.read_and_preprocess import *
 from sklearn.model_selection import train_test_split
 from LSTM import LSTM_
+from base_model import base_model
+
 
 full = True
 glove_dimension = 25
@@ -19,10 +21,6 @@ max_words = 40
 print("Loading Data...")
 X_train, Y_train, X_test, embeding_matrix = load_data(FULL=full , GLOVE_DIMENSION=glove_dimension , MAX_WORDS=max_words)
 print("Data Loaded...")
-
-print(embeding_matrix.shape[0])
-
-xtrain , xvalid, ytrain, yvalid = train_test_split(X_train, Y_train, shuffle=True, test_size=0.1, random_state=0) # for cross validation
 
 # model parameters
 params = {
@@ -45,7 +43,7 @@ print("----model summary----")
 print(lstm.model.summary())
 # Train the model ---> save the weights with best validation loss
 print("----training.....")
-lstm.train(xtrain, ytrain, epochs=params["epochs"], batch_size=params["batch_size"], validation_data=(xvalid, yvalid))
+lstm.train(X_train, Y_train, epochs=params["epochs"], batch_size=params["batch_size"])
 print("------model trained------")
 print("++++++++++++++++++++++++++++++++++")
 print(model_name)
