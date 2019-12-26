@@ -5,6 +5,8 @@ This project is created as part of the Machine Learning course [CS-433] at EPFL.
 - ID: 30300
 - Username: fereshte
 - Time: Tue, 17 Dec 2019, 17:37:16
+- Accuracy: 86.6 %
+- F1-Score: 0.87
 
 ## Used Libraries
 ```
@@ -32,13 +34,13 @@ To run for every data and model. First, locate datasets in data folder. You can 
 ## Folder structure of project
 ```
 .
-├── baseline_models        # This folder contains the implementation of RLR and SVM models as our baselines
 ├── data                   # This folder includes twitter datasets and glove dataset
 ├── data_preprocessing     # Functions for reading data, preprocessing, generating data from glove embedding matrix, and loading data
 ├── generated_parameters   # This folder includes generated checkpoints from training of models
 ├── models                 # This folder includes the implementation of neural network models
 ├── paths                  # json file to specify relative paths
 ├── results                # This folder consists of .csv result file for submitting to crowdAI
+├── train_models        # This folder contains the implementation of training LSTM, CNN, and GRU models
 ├── README.md              # README file
 ├── run.py                 # Script for running the best model and creating result file
 └── train_predict.py       # This file generate and load data, train the desired model, and finally generate prediction for test data
