@@ -40,7 +40,7 @@ To run for every data and model. First, locate datasets in data folder. You can 
 ├── models                 # This folder includes the implementation of neural network models
 ├── paths                  # json file to specify relative paths
 ├── results                # This folder consists of .csv result file for submitting to crowdAI
-├── train_models        # This folder contains the implementation of training LSTM, CNN, and GRU models
+├── train_models           # This folder contains the implementation of training LSTM, CNN, and GRU models
 ├── README.md              # README file
 ├── run.py                 # Script for running the best model and creating result file
 └── train_predict.py       # This file generate and load data, train the desired model, and finally generate prediction for test data
